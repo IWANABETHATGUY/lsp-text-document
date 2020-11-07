@@ -28,7 +28,7 @@ impl FullTextDocument {
         }
     }
 
-    pub fn update(&mut self, changes: Vec<TextDocumentContentChangeEvent>) {
+    pub fn update(&mut self, changes: Vec<TextDocumentContentChangeEvent>, version: i64) {
         for change in changes {
             if Self::is_incremental(&change) {
                 // makes sure start is before end
@@ -44,20 +44,21 @@ impl FullTextDocument {
                 let end_line = range.end.line as usize;
                 let line_offsets = self.get_line_offsets();
 
+                let mut add_line_offsets =
+                    compute_line_offsets(&change.text, false, Some(start_offset));
+                
+                let add_line_offsets_len = add_line_offsets.len();
                 if line_offsets.len() <= end_line as usize {
                     line_offsets.extend(vec![0; end_line as usize + 1 - line_offsets.len()]);
                 }
 
-                let mut add_line_offsets =
-                    compute_line_offsets(&change.text, false, Some(start_offset));
-                let add_line_offsets_len = add_line_offsets.len();
                 if end_line - start_line == add_line_offsets.len() {
                     for (i, offset) in add_line_offsets.into_iter().enumerate() {
                         line_offsets[i + start_line + 1] = offset;
                     }
                 } else {
                     *line_offsets = {
-                        let mut res= line_offsets[0..=start_line].to_vec();
+                        let mut res = line_offsets[0..=start_line].to_vec();
                         res.append(&mut add_line_offsets);
                         res.extend_from_slice(&line_offsets[end_line + 1..]);
                         res
@@ -73,35 +74,36 @@ impl FullTextDocument {
                 self.text = change.text;
                 self.line_offset = None;
             }
+            self.version = version;
         }
     }
 
     // TODO:
     // public positionAt(offset: number): Position {
-	// 	offset = Math.max(Math.min(offset, this._content.length), 0);
+    // 	offset = Math.max(Math.min(offset, this._content.length), 0);
 
-	// 	let lineOffsets = this.getLineOffsets();
-	// 	let low = 0, high = lineOffsets.length;
-	// 	if (high === 0) {
-	// 		return { line: 0, character: offset };
-	// 	}
-	// 	while (low < high) {
-	// 		let mid = Math.floor((low + high) / 2);
-	// 		if (lineOffsets[mid] > offset) {
-	// 			high = mid;
-	// 		} else {
-	// 			low = mid + 1;
-	// 		}
-	// 	}
-	// 	// low is the least x for which the line offset is larger than the current offset
-	// 	// or array.length if no line offset is larger than the current offset
-	// 	let line = low - 1;
-	// 	return { line, character: offset - lineOffsets[line] };
-	// }
+    // 	let lineOffsets = this.getLineOffsets();
+    // 	let low = 0, high = lineOffsets.length;
+    // 	if (high === 0) {
+    // 		return { line: 0, character: offset };
+    // 	}
+    // 	while (low < high) {
+    // 		let mid = Math.floor((low + high) / 2);
+    // 		if (lineOffsets[mid] > offset) {
+    // 			high = mid;
+    // 		} else {
+    // 			low = mid + 1;
+    // 		}
+    // 	}
+    // 	// low is the least x for which the line offset is larger than the current offset
+    // 	// or array.length if no line offset is larger than the current offset
+    // 	let line = low - 1;
+    // 	return { line, character: offset - lineOffsets[line] };
+    // }
     // TODO:
-// public get lineCount() {
-// 		return this.getLineOffsets().length;
-// 	}
+    // public get lineCount() {
+    // 		return this.getLineOffsets().length;
+    // 	}
     pub fn is_incremental(event: &TextDocumentContentChangeEvent) -> bool {
         event.range_length.is_some() && event.range.is_some()
     }
