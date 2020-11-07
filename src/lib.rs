@@ -63,7 +63,7 @@ impl FullTextDocument {
                         res
                     };
                 }
-                let diff = change.text.len() - (start_offset - end_offset);
+                let diff = change.text.len() - (end_offset - start_offset);
                 if diff != 0 {
                     for i in start_line + 1 + add_line_offsets_len..line_offsets.len() {
                         line_offsets[i] = line_offsets[i] + diff;
