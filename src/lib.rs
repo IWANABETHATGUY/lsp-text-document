@@ -46,7 +46,7 @@ impl FullTextDocument {
 
                 let mut add_line_offsets =
                     compute_line_offsets(&change.text, false, Some(start_offset));
-                
+
                 let add_line_offsets_len = add_line_offsets.len();
                 if line_offsets.len() <= end_line as usize {
                     line_offsets.extend(vec![0; end_line as usize + 1 - line_offsets.len()]);
@@ -70,7 +70,7 @@ impl FullTextDocument {
                         line_offsets[i] = (line_offsets[i] as i32 + diff) as usize;
                     }
                 }
-            } else if Self::is_full(&change){
+            } else if Self::is_full(&change) {
                 self.text = change.text;
                 self.line_offset = None;
             }
@@ -100,10 +100,10 @@ impl FullTextDocument {
     // 	let line = low - 1;
     // 	return { line, character: offset - lineOffsets[line] };
     // }
-    // TODO:
-    // public get lineCount() {
-    // 		return this.getLineOffsets().length;
-    // 	}
+
+    pub fn line_count(&mut self) -> usize {
+        self.get_line_offsets().len()
+    }
     pub fn is_incremental(event: &TextDocumentContentChangeEvent) -> bool {
         event.range_length.is_some() && event.range.is_some()
     }
@@ -118,7 +118,7 @@ impl FullTextDocument {
         }
         self.line_offset.as_mut().unwrap()
     }
-    fn offset_at(&mut self, position: Position) -> usize {
+    pub fn offset_at(&mut self, position: Position) -> usize {
         let line_offsets = self.get_line_offsets();
         if position.line >= line_offsets.len() as u64 {
             return self.text.len();
@@ -139,7 +139,7 @@ impl FullTextDocument {
     }
 }
 
-fn compute_line_offsets(
+pub fn compute_line_offsets(
     text: &String,
     is_at_line_start: bool,
     text_offset: Option<usize>,
@@ -155,7 +155,8 @@ fn compute_line_offsets(
         vec![]
     };
     let char_array: Vec<char> = text.chars().collect();
-    for mut i in 0..char_array.len() {
+    let mut i = 0;
+    while i < char_array.len() {
         let &ch = unsafe { char_array.get_unchecked(i) };
         if ch == '\r' || ch == '\n' {
             if ch == '\r'
@@ -166,6 +167,7 @@ fn compute_line_offsets(
             }
             result.push(text_offset + i + 1);
         }
+        i += 1;
     }
     result
 }

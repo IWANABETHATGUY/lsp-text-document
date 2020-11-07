@@ -1,5 +1,7 @@
+use lsp_text_document::compute_line_offsets;
+
 fn main() {
-    println!("Hello, world!");
-    let mut a = vec![0];
-    println!("{:?}", a);
+    let res = compute_line_offsets(&"ABCDE\r\nFGHIJ".into(), true, None);
+    println!("{:?}", res);
+
 }
