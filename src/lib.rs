@@ -64,13 +64,13 @@ impl FullTextDocument {
                         res
                     };
                 }
-                let diff = change.text.len() - (end_offset - start_offset);
+                let diff: i32 = change.text.len() as i32 - (end_offset - start_offset) as i32;
                 if diff != 0 {
                     for i in start_line + 1 + add_line_offsets_len..line_offsets.len() {
-                        line_offsets[i] = line_offsets[i] + diff;
+                        line_offsets[i] = (line_offsets[i] as i32 + diff) as usize;
                     }
                 }
-            } else {
+            } else if Self::is_full(&change){
                 self.text = change.text;
                 self.line_offset = None;
             }
