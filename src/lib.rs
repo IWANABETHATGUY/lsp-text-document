@@ -78,28 +78,45 @@ impl FullTextDocument {
         }
     }
 
-    // TODO:
-    // public positionAt(offset: number): Position {
-    // 	offset = Math.max(Math.min(offset, this._content.length), 0);
+    pub fn position_at(&mut self, mut offset: u64) -> Position {
+        offset = offset.min(self.text.len() as u64).max(0);
 
-    // 	let lineOffsets = this.getLineOffsets();
-    // 	let low = 0, high = lineOffsets.length;
-    // 	if (high === 0) {
-    // 		return { line: 0, character: offset };
-    // 	}
-    // 	while (low < high) {
-    // 		let mid = Math.floor((low + high) / 2);
-    // 		if (lineOffsets[mid] > offset) {
-    // 			high = mid;
-    // 		} else {
-    // 			low = mid + 1;
-    // 		}
-    // 	}
-    // 	// low is the least x for which the line offset is larger than the current offset
-    // 	// or array.length if no line offset is larger than the current offset
-    // 	let line = low - 1;
-    // 	return { line, character: offset - lineOffsets[line] };
-    // }
+        let line_offsets = self.get_line_offsets();
+        // let low = 0, high = lineOffsets.length;
+        let mut low = 0usize;
+        let mut high = line_offsets.len();
+        if high == 0 {
+            return Position {
+                line: 0,
+                character: offset,
+            };
+        }
+        while low < high {
+            let mid = low + (high - low) / 2;
+            if line_offsets[mid] as u64 > offset {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+        let line = low as u64 - 1;
+        return Position {
+            line,
+            character: offset - line_offsets[line as usize] as u64,
+        };
+        // while (low < high) {
+        // 	let mid = Math.floor((low + high) / 2);
+        // 	if (lineOffsets[mid] > offset) {
+        // 		high = mid;
+        // 	} else {
+        // 		low = mid + 1;
+        // 	}
+        // }
+        // // low is the least x for which the line offset is larger than the current offset
+        // // or array.length if no line offset is larger than the current offset
+        // let line = low - 1;
+        // return { line, character: offset - lineOffsets[line] };
+    }
 
     pub fn line_count(&mut self) -> usize {
         self.get_line_offsets().len()
