@@ -158,8 +158,8 @@ mod test_document_full_update {
 #[cfg(test)]
 mod test_document_incremental_update {
     use super::*;
-    use lsp_text_document::{ie, range_after, range_at, re};
-    use lsp_types::{Range, TextDocumentContentChangeEvent};
+    use lsp_text_document::*;
+    use lsp_types::{Position, Range, TextDocumentContentChangeEvent};
     fn assert_valid_line_number(doc: &mut lsp_text_document::FullTextDocument) {
         let text = doc.text.to_string();
         let mut expected_line_number = 0;
@@ -308,22 +308,14 @@ mod test_document_incremental_update {
         assert_eq!(document.line_count(), 9);
         assert_valid_line_number(&mut document);
         document.update(
-            vec![re!(
-                "xx\nyy",
-                document.clone(),
-                "\na3\nb3\na4\nb4\n"
-            )],
+            vec![re!("xx\nyy", document.clone(), "\na3\nb3\na4\nb4\n")],
             1,
         );
         assert_eq!(document.version, 1);
-        assert_eq!(
-            document.text,
-            "a1\nb1\na2\nb2xx\nyy"
-        );
+        assert_eq!(document.text, "a1\nb1\na2\nb2xx\nyy");
         assert_eq!(document.line_count(), 5);
         assert_valid_line_number(&mut document);
     }
-
 
     #[test]
     /// Incrementally replacing multi-line content, same num of lines and chars
@@ -331,23 +323,12 @@ mod test_document_incremental_update {
         let mut document = new_document("a1\nb1\na2\nb2\na3\nb3\na4\nb4\n");
         assert_eq!(document.line_count(), 9);
         assert_valid_line_number(&mut document);
-        document.update(
-            vec![re!(
-                "\nxx1\nxx2",
-                document.clone(),
-                "a2\nb2\na3"
-            )],
-            1,
-        );
+        document.update(vec![re!("\nxx1\nxx2", document.clone(), "a2\nb2\na3")], 1);
         assert_eq!(document.version, 1);
-        assert_eq!(
-            document.text,
-            "a1\nb1\n\nxx1\nxx2\nb3\na4\nb4\n"
-        );
+        assert_eq!(document.text, "a1\nb1\n\nxx1\nxx2\nb3\na4\nb4\n");
         assert_eq!(document.line_count(), 9);
         assert_valid_line_number(&mut document);
     }
-
 
     #[test]
     /// Incrementally replacing multi-line content, same num of lines but diff chars
@@ -355,19 +336,9 @@ mod test_document_incremental_update {
         let mut document = new_document("a1\nb1\na2\nb2\na3\nb3\na4\nb4\n");
         assert_eq!(document.line_count(), 9);
         assert_valid_line_number(&mut document);
-        document.update(
-            vec![re!(
-                "\ny\n",
-                document.clone(),
-                "a2\nb2\na3"
-            )],
-            1,
-        );
+        document.update(vec![re!("\ny\n", document.clone(), "a2\nb2\na3")], 1);
         assert_eq!(document.version, 1);
-        assert_eq!(
-            document.text,
-            "a1\nb1\n\ny\n\nb3\na4\nb4\n"
-        );
+        assert_eq!(document.text, "a1\nb1\n\ny\n\nb3\na4\nb4\n");
         assert_eq!(document.line_count(), 9);
         assert_valid_line_number(&mut document);
     }
@@ -378,24 +349,123 @@ mod test_document_incremental_update {
         let mut document = new_document("a1\ncc\nb1");
         assert_eq!(document.line_count(), 3);
         assert_valid_line_number(&mut document);
-        let text: String = String::from("dd") + &"\ndd".repeat(1999);
-        document.update(
-            vec![re!(
-                &text,
-                document.clone(),
-                "\ncc"
-            )],
-            1,
-        );
+        let text: String = String::from("dd") + &"\ndd".repeat(199);
+        document.update(vec![re!(&text, document.clone(), "\ncc")], 1);
         assert_eq!(document.version, 1);
-        assert_eq!(
-            document.text,
-            "a1".to_string() + &text + "\nb1"
-        );
-        assert_eq!(document.line_count(), 2001);
+        assert_eq!(document.text, "a1".to_string() + &text + "\nb1");
+        assert_eq!(document.line_count(), 201);
         assert_valid_line_number(&mut document);
     }
 
-    // #[test]
-    // fn test_
+    #[test]
+    fn test_several_increment() {
+        let mut document = new_document("function abc() {\n  console.log(\"hello, world!\");\n}");
+        document.update(
+            vec![
+                event!("defg", range!(0, 12, 0, 12)),
+                event!("hello, test case!!!", range!(1, 15, 1, 28)),
+                event!("hij", range!(0, 16, 0, 16)),
+            ],
+            1,
+        );
+        assert_eq!(document.version, 1);
+        assert_valid_line_number(&mut document);
+        assert_eq!(
+            document.text,
+            "function abcdefghij() {\n  console.log(\"hello, test case!!!\");\n}"
+        );
+    }
+
+    #[test]
+    fn test_basic_append() {
+        let mut document = new_document("foooo\nbar\nbaz");
+        assert_eq!(document.offset_at(position!(2, 0)), 10);
+        document.update(vec![event!(" some extra content", range!(1, 3, 1, 3))], 1);
+        assert_eq!(
+            document.text,
+            "foooo\nbar some extra content\nbaz"
+        );
+        assert_eq!(document.version, 1);
+        assert_eq!(document.offset_at(position!(2, 0)), 29);
+        assert_valid_line_number(&mut document);
+    }
+
+
+    #[test]
+    fn test_multi_line_append() {
+        let mut document = new_document("foooo\nbar\nbaz");
+        assert_eq!(document.offset_at(position!(2, 0)), 10);
+        document.update(vec![event!(" some extra\ncontent", range!(1, 3, 1, 3))], 1);
+        assert_eq!(
+            document.text,
+            "foooo\nbar some extra\ncontent\nbaz"
+        );
+        assert_eq!(document.version, 1);
+        assert_eq!(document.offset_at(position!(3, 0)), 29);
+        assert_eq!(document.line_count(), 4);
+        assert_valid_line_number(&mut document);
+    }
+
+
+    #[test]
+    fn test_basic_delete() {
+        let mut document = new_document("foooo\nbar\nbaz");
+        assert_eq!(document.offset_at(position!(2, 0)), 10);
+        document.update(vec![event!("", range!(1, 0, 1, 3))], 1);
+        assert_eq!(
+            document.text,
+            "foooo\n\nbaz"
+        );
+        assert_eq!(document.version, 1);
+        assert_eq!(document.offset_at(position!(2, 0)), 7);
+        assert_eq!(document.line_count(), 3);
+        assert_valid_line_number(&mut document);
+    }
+
+
+    #[test]
+    fn test_multi_line_delete() {
+        let mut document = new_document("foooo\nbar\nbaz");
+        assert_eq!(document.offset_at(position!(2, 0)), 10);
+        document.update(vec![event!("", range!(0, 5, 1, 3))], 1);
+        assert_eq!(
+            document.text,
+            "foooo\nbaz"
+        );
+        assert_eq!(document.version, 1);
+        assert_eq!(document.offset_at(position!(1, 0)), 6);
+        assert_eq!(document.line_count(), 2);
+        assert_valid_line_number(&mut document);
+    }
+
+
+    #[test]
+    fn test_single_character_replace() {
+        let mut document = new_document("foooo\nbar\nbaz");
+        assert_eq!(document.offset_at(position!(2, 0)), 10);
+        document.update(vec![event!("z", range!(1, 2, 1, 3))], 2);
+        assert_eq!(
+            document.text,
+            "foooo\nbaz\nbaz"
+        );
+        assert_eq!(document.version, 2);
+        assert_eq!(document.offset_at(position!(2, 0)), 10);
+        assert_eq!(document.line_count(), 3);
+        assert_valid_line_number(&mut document);
+    }
+
+    #[test]
+    fn test_multi_character_replace() {
+        let mut document = new_document("foo\nbar");
+        assert_eq!(document.offset_at(position!(1, 0)), 4);
+        document.update(vec![event!("foobar", range!(1, 0, 1, 3))], 1);
+        assert_eq!(
+            document.text,
+            "foo\nfoobar"
+        );
+        assert_eq!(document.version, 1);
+        assert_eq!(document.offset_at(position!(1, 0)), 4);
+        assert_eq!(document.line_count(), 2);
+        assert_valid_line_number(&mut document);
+    }
 }
