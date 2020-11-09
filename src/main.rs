@@ -6,9 +6,11 @@ pub fn new_document(str: &str) -> FullTextDocument {
     FullTextDocument::new(url.unwrap(), "text".into(), 0, str.to_string())
 }
 fn main() {
-    let mut document = new_document("foo\nbar");
-    document.update(vec![event!("abc123", range!(3, 0, 6, 10))], 2);
-    // println!("{:?}", document.get_line_offsets());
+    let mut document = new_document("我的你的真的加载\ntest");
+    let mut string = "我的你的".to_string();
+    println!("{:?}", string.chars().take(1).chain(string.chars().skip(3)).to_owned().collect::<String>());
+    // document.update(vec![event!("abc123", range!(3, 0, 6, 10))], 2);
+    println!("{:?}", document.get_line_offsets());
     // assert_eq!(document.text, "foo\nbarabc123");
     // assert_eq!(document.version, 2);
     // assert_eq!(document.offset_at(position!(1, 100)), 13);
