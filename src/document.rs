@@ -1,4 +1,5 @@
 use lsp_types::{Position, Range, TextDocumentContentChangeEvent, Url};
+#[derive(Clone)]
 pub struct FullTextDocument {
     pub uri: Url,
 
@@ -121,14 +122,14 @@ impl FullTextDocument {
         self.get_line_offsets().len()
     }
     pub fn is_incremental(event: &TextDocumentContentChangeEvent) -> bool {
-        event.range_length.is_some() && event.range.is_some()
+        event.range.is_some()
     }
 
     pub fn is_full(event: &TextDocumentContentChangeEvent) -> bool {
-        !event.range_length.is_some() || !event.range.is_some()
+        !event.range_length.is_some() && !event.range.is_some()
     }
 
-    fn get_line_offsets(&mut self) -> &mut Vec<usize> {
+    pub fn get_line_offsets(&mut self) -> &mut Vec<usize> {
         if self.line_offset.is_none() {
             self.line_offset = Some(compute_line_offsets(&self.text, true, None));
         }
