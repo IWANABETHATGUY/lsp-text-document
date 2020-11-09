@@ -7,15 +7,14 @@ pub fn new_document(str: &str) -> FullTextDocument {
 }
 #[cfg(test)]
 mod test_document_model {
-    use lsp_types::Position;
-
     use super::*;
-
+    use lsp_text_document::position;
+    use lsp_types::Position;
     #[test]
     fn test_empty_content() {
         let mut document = new_document("");
         assert_eq!(document.line_count(), 1);
-        assert_eq!(document.offset_at(Position::new(0, 0)), 0);
+        assert_eq!(document.offset_at(position!(0, 0)), 0);
     }
 
     #[test]
@@ -24,7 +23,7 @@ mod test_document_model {
         let mut document = new_document(str);
         assert_eq!(document.line_count(), 1);
         for i in 0..str.len() {
-            assert_eq!(document.offset_at(Position::new(0, i as u64)), i);
+            assert_eq!(document.offset_at(position!(0, i)), i);
         }
     }
 
@@ -36,13 +35,10 @@ mod test_document_model {
         for i in 0..str.len() {
             let line = i / 6;
             let column = i % 6;
-            assert_eq!(
-                document.offset_at(Position::new(line as u64, column as u64)),
-                i
-            );
+            assert_eq!(document.offset_at(position!(line, column)), i);
         }
-        assert_eq!(document.offset_at(Position::new(3 as u64, 0 as u64)), 18);
-        assert_eq!(document.offset_at(Position::new(3 as u64, 1 as u64)), 18);
+        assert_eq!(document.offset_at(position!(3, 0)), 18);
+        assert_eq!(document.offset_at(position!(3, 1)), 18);
     }
 
     #[test]
@@ -50,8 +46,8 @@ mod test_document_model {
         let str = "\nABCDE";
         let mut document = new_document(str);
         assert_eq!(document.line_count(), 2);
-        assert_eq!(document.offset_at(Position::new(0 as u64, 0 as u64)), 0);
-        assert_eq!(document.offset_at(Position::new(1 as u64, 1 as u64)), 2);
+        assert_eq!(document.offset_at(position!(0, 0)), 0);
+        assert_eq!(document.offset_at(position!(1, 1)), 2);
     }
 
     #[test]
