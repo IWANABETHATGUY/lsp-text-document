@@ -1,5 +1,3 @@
-use lsp_types::Range;
-
 #[macro_export]
 macro_rules! position {
     ($line:expr, $character:expr) => {{
@@ -52,4 +50,14 @@ macro_rules! re {
             }
         }
     };
+}
+
+#[macro_export]
+macro_rules! range {
+    ($a:expr, $b:expr, $c:expr, $d:expr) => {
+        lsp_types::Range {
+            start: position!($a, $b),
+            end: position!($c, $d)
+        }
+    }
 }
