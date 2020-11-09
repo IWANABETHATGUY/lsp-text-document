@@ -381,73 +381,54 @@ mod test_document_incremental_update {
         let mut document = new_document("foooo\nbar\nbaz");
         assert_eq!(document.offset_at(position!(2, 0)), 10);
         document.update(vec![event!(" some extra content", range!(1, 3, 1, 3))], 1);
-        assert_eq!(
-            document.text,
-            "foooo\nbar some extra content\nbaz"
-        );
+        assert_eq!(document.text, "foooo\nbar some extra content\nbaz");
         assert_eq!(document.version, 1);
         assert_eq!(document.offset_at(position!(2, 0)), 29);
         assert_valid_line_number(&mut document);
     }
-
 
     #[test]
     fn test_multi_line_append() {
         let mut document = new_document("foooo\nbar\nbaz");
         assert_eq!(document.offset_at(position!(2, 0)), 10);
         document.update(vec![event!(" some extra\ncontent", range!(1, 3, 1, 3))], 1);
-        assert_eq!(
-            document.text,
-            "foooo\nbar some extra\ncontent\nbaz"
-        );
+        assert_eq!(document.text, "foooo\nbar some extra\ncontent\nbaz");
         assert_eq!(document.version, 1);
         assert_eq!(document.offset_at(position!(3, 0)), 29);
         assert_eq!(document.line_count(), 4);
         assert_valid_line_number(&mut document);
     }
 
-
     #[test]
     fn test_basic_delete() {
         let mut document = new_document("foooo\nbar\nbaz");
         assert_eq!(document.offset_at(position!(2, 0)), 10);
         document.update(vec![event!("", range!(1, 0, 1, 3))], 1);
-        assert_eq!(
-            document.text,
-            "foooo\n\nbaz"
-        );
+        assert_eq!(document.text, "foooo\n\nbaz");
         assert_eq!(document.version, 1);
         assert_eq!(document.offset_at(position!(2, 0)), 7);
         assert_eq!(document.line_count(), 3);
         assert_valid_line_number(&mut document);
     }
 
-
     #[test]
     fn test_multi_line_delete() {
         let mut document = new_document("foooo\nbar\nbaz");
         assert_eq!(document.offset_at(position!(2, 0)), 10);
         document.update(vec![event!("", range!(0, 5, 1, 3))], 1);
-        assert_eq!(
-            document.text,
-            "foooo\nbaz"
-        );
+        assert_eq!(document.text, "foooo\nbaz");
         assert_eq!(document.version, 1);
         assert_eq!(document.offset_at(position!(1, 0)), 6);
         assert_eq!(document.line_count(), 2);
         assert_valid_line_number(&mut document);
     }
 
-
     #[test]
     fn test_single_character_replace() {
         let mut document = new_document("foooo\nbar\nbaz");
         assert_eq!(document.offset_at(position!(2, 0)), 10);
         document.update(vec![event!("z", range!(1, 2, 1, 3))], 2);
-        assert_eq!(
-            document.text,
-            "foooo\nbaz\nbaz"
-        );
+        assert_eq!(document.text, "foooo\nbaz\nbaz");
         assert_eq!(document.version, 2);
         assert_eq!(document.offset_at(position!(2, 0)), 10);
         assert_eq!(document.line_count(), 3);
@@ -459,13 +440,26 @@ mod test_document_incremental_update {
         let mut document = new_document("foo\nbar");
         assert_eq!(document.offset_at(position!(1, 0)), 4);
         document.update(vec![event!("foobar", range!(1, 0, 1, 3))], 1);
-        assert_eq!(
-            document.text,
-            "foo\nfoobar"
-        );
+        assert_eq!(document.text, "foo\nfoobar");
         assert_eq!(document.version, 1);
         assert_eq!(document.offset_at(position!(1, 0)), 4);
         assert_eq!(document.line_count(), 2);
         assert_valid_line_number(&mut document);
+    }
+
+    #[test]
+    fn test_invalid_update() {
+        // The middle of document -> after the document ends
+        let mut document = new_document("foo\r\nbar");
+        document.update(vec![event!("foobar", range!(1, 0, 1, 10))], 2);
+        assert_eq!(document.text, "foo\r\nfoobar");
+        assert_eq!(document.version, 2);
+        assert_eq!(document.offset_at(position!(1, 100)), 11);
+        // After the document ends -> after the document ends
+        let mut document = new_document("foo\nbar");
+        document.update(vec![event!("abc123", range!(3, 0, 6, 10))], 2);
+        assert_eq!(document.text, "foo\nbarabc123");
+        assert_eq!(document.version, 2);
+        assert_eq!(document.offset_at(position!(1, 100)), 13);
     }
 }

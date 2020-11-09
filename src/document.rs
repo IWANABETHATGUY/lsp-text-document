@@ -48,9 +48,9 @@ impl FullTextDocument {
                     compute_line_offsets(&change.text, false, Some(start_offset));
 
                 let add_line_offsets_len = add_line_offsets.len();
-                if line_offsets.len() <= end_line as usize {
-                    line_offsets.extend(vec![0; end_line as usize + 1 - line_offsets.len()]);
-                }
+                // if line_offsets.len() <= end_line as usize {
+                //     line_offsets.extend(vec![0; end_line as usize + 1 - line_offsets.len()]);
+                // }
 
                 if end_line - start_line == add_line_offsets.len() {
                     for (i, offset) in add_line_offsets.into_iter().enumerate() {
@@ -58,9 +58,9 @@ impl FullTextDocument {
                     }
                 } else {
                     *line_offsets = {
-                        let mut res = line_offsets[0..=start_line].to_vec();
+                        let mut res = line_offsets[0..=start_line.min(line_offsets.len() - 1)].to_vec();
                         res.append(&mut add_line_offsets);
-                        res.extend_from_slice(&line_offsets[end_line + 1..]);
+                        res.extend_from_slice(&line_offsets[end_line.min(line_offsets.len() - 1) + 1..]);
                         res
                     };
                 }
