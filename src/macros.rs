@@ -60,4 +60,17 @@ macro_rules! range {
             end: position!($c, $d)
         }
     }
+
+}
+
+#[macro_export]
+macro_rules! event {
+    ($text:expr, $range:expr) => {
+        lsp_types::TextDocumentContentChangeEvent {
+            text: $text.to_string(),
+            range: Some($range),
+            range_length: None
+        }
+    }
+
 }
