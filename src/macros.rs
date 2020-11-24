@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! position {
     ($line:expr, $character:expr) => {{
-        Position::new($line as u64, $character as u64)
+        Position::new($line as u32, $character as u32)
     }};
 }
 
@@ -10,8 +10,8 @@ macro_rules! range_at {
     ($doc:expr, $sub:expr) => {{
         let index = $doc.text.find($sub).unwrap();
         lsp_types::Range::new(
-            $doc.position_at(index as u64),
-            $doc.position_at(index as u64 + $sub.len() as u64),
+            $doc.position_at(index as u32),
+            $doc.position_at(index as u32 + $sub.len() as u32),
         )
     }};
 }
@@ -21,8 +21,8 @@ macro_rules! range_after {
     ($doc:expr, $sub:expr ) => {{
         let index = $doc.text.find($sub).unwrap() + $sub.len();
         lsp_types::Range::new(
-            $doc.position_at(index as u64),
-            $doc.position_at(index as u64),
+            $doc.position_at(index as u32),
+            $doc.position_at(index as u32),
         )
     }};
 }

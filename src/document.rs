@@ -78,8 +78,8 @@ impl FullTextDocument {
         }
     }
 
-    pub fn position_at(&mut self, mut offset: u64) -> Position {
-        offset = offset.min(self.text.len() as u64).max(0);
+    pub fn position_at(&mut self, mut offset: u32) -> Position {
+        offset = offset.min(self.text.len() as u32).max(0);
 
         let line_offsets = self.get_line_offsets();
         // let low = 0, high = lineOffsets.length;
@@ -93,16 +93,16 @@ impl FullTextDocument {
         }
         while low < high {
             let mid = low + (high - low) / 2;
-            if line_offsets[mid] as u64 > offset {
+            if line_offsets[mid] as u32   > offset {
                 high = mid;
             } else {
                 low = mid + 1;
             }
         }
-        let line = low as u64 - 1;
+        let line = low as u32 - 1;
         return Position {
             line,
-            character: offset - line_offsets[line as usize] as u64,
+            character: offset - line_offsets[line as usize] as u32,
         };
         // while (low < high) {
         // 	let mid = Math.floor((low + high) / 2);
@@ -137,11 +137,11 @@ impl FullTextDocument {
     }
     pub fn offset_at(&mut self, position: Position) -> usize {
         let line_offsets = self.get_line_offsets();
-        if position.line >= line_offsets.len() as u64 {
+        if position.line >= line_offsets.len() as u32 {
             return self.text.len();
         }
         let line_offset = line_offsets[position.line as usize];
-        let next_line_offset = if position.line + 1 < line_offsets.len() as u64 {
+        let next_line_offset = if position.line + 1 < line_offsets.len() as u32 {
             line_offsets[position.line as usize + 1]
         } else {
             self.text.len()

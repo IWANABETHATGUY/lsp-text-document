@@ -30,7 +30,7 @@ mod test_document_model {
         assert_eq!(document.line_count(), 1);
         for i in 0..str.len() {
             assert_eq!(document.offset_at(position!(0, i)), i);
-            assert_eq!(document.position_at(i as u64), position!(0, i));
+            assert_eq!(document.position_at(i as u32), position!(0, i));
         }
     }
 
@@ -43,12 +43,12 @@ mod test_document_model {
             let line = i / 6;
             let column = i % 6;
             assert_eq!(document.offset_at(position!(line, column)), i);
-            assert_eq!(document.position_at(i as u64), position!(line, column));
+            assert_eq!(document.position_at(i as u32), position!(line, column));
         }
         assert_eq!(document.offset_at(position!(3, 0)), 18);
         assert_eq!(document.offset_at(position!(3, 1)), 18);
-        assert_eq!(document.position_at(18u64), position!(3, 0));
-        assert_eq!(document.position_at(19u64), position!(3, 0));
+        assert_eq!(document.position_at(18u32), position!(3, 0));
+        assert_eq!(document.position_at(19u32), position!(3, 0));
     }
 
     #[test]
@@ -101,11 +101,11 @@ mod test_document_model {
 
         // invalid offsets
         assert_eq!(
-            document.position_at(str.len() as u64),
+            document.position_at(str.len() as u32),
             position!(0, str.len())
         );
         assert_eq!(
-            document.position_at(str.len() as u64 + 3),
+            document.position_at(str.len() as u32 + 3),
             position!(0, str.len())
         );
     }
@@ -164,14 +164,14 @@ mod test_document_incremental_update {
         let text = doc.text.to_string();
         let mut expected_line_number = 0;
         for i in 0..text.len() {
-            assert_eq!(doc.position_at(i as u64).line, expected_line_number);
+            assert_eq!(doc.position_at(i as u32).line, expected_line_number);
             let ch = text.chars().nth(i).unwrap();
             if ch == '\n' {
                 expected_line_number += 1;
             }
         }
         assert_eq!(
-            doc.position_at(text.len() as u64).line,
+            doc.position_at(text.len() as u32).line,
             expected_line_number
         );
     }
