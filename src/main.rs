@@ -19,11 +19,24 @@ fn main() {
 
     // assert_eq!(document.line_count(), 3);
     // assert_valid_line_number(&mut document);
+    let s = 10000;
+    let e = 10100;
     let string = read_to_string("test.js").unwrap();
     let start = Instant::now();
+    let mut first_another = "".to_string();
+    
     for i in 0..100 {
         let text = string.clone();
-        let _another = text[0..3].to_string() + "what" + &text[4..];
+        let start_byte = string
+            .chars()
+            .take(s)
+            .fold(0, |acc, cur| acc + cur.len_utf8());
+        let end_byte = (&string[s..e])
+            .chars()
+            .take(e)
+            .fold(0, |acc, cur| acc + cur.len_utf8()) + start_byte;
+        first_another = text[0..start_byte].to_string() + "what" + &text[end_byte..];
+        // println!("{:?}", _another);
     }
     println!("{:?}", start.elapsed());
 
@@ -32,10 +45,11 @@ fn main() {
         let text = string.clone();
         let _another = text
             .chars()
-            .take(3)
+            .take(s)
             .chain("what".chars())
-            .chain(text.chars().skip(4))
+            .chain(text.chars().skip(e))
             .collect::<String>();
+        assert!(&first_another == &_another);
     }
     println!("{:?}", start.elapsed());
     // self.text =

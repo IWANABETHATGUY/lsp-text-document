@@ -9,3 +9,5 @@ description = "textDocument manager rust implementation"
 
 [dependencies]
 lsp-types = "0.84.0"
+codespan-lsp = "0.11.0"
+codespan-reporting = "0.11.0"

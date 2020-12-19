@@ -37,9 +37,12 @@ impl FullTextDocument {
                 let start_offset = self.offset_at(range.start);
                 let end_offset = self.offset_at(range.end);
 
-                // self.text = self.text[0..start_offset].to_string() + &change.text + &self.text[end_offset..];
-                self.text =
-                    self.text.chars().take(start_offset).chain(change.text.chars()).chain(self.text.chars().skip(end_offset)).collect::<String>();
+                let (start_byte, end_byte) = self.transform_offset_to_byte_offset(start_offset, end_offset);
+                self.text = self.text[0..start_byte].to_string()
+                    + &change.text
+                    + &self.text[end_byte..];
+                // self.text =
+                //     self.text.chars().take(start_offset).chain(change.text.chars()).chain(self.text.chars().skip(end_offset)).collect::<String>();
                 let start_line = range.start.line as usize;
                 let end_line = range.end.line as usize;
                 let line_offsets = self.get_line_offsets();
@@ -58,9 +61,12 @@ impl FullTextDocument {
                     }
                 } else {
                     *line_offsets = {
-                        let mut res = line_offsets[0..=start_line.min(line_offsets.len() - 1)].to_vec();
+                        let mut res =
+                            line_offsets[0..=start_line.min(line_offsets.len() - 1)].to_vec();
                         res.append(&mut add_line_offsets);
-                        res.extend_from_slice(&line_offsets[end_line.min(line_offsets.len() - 1) + 1..]);
+                        res.extend_from_slice(
+                            &line_offsets[end_line.min(line_offsets.len() - 1) + 1..],
+                        );
                         res
                     };
                 }
@@ -78,6 +84,18 @@ impl FullTextDocument {
         }
     }
 
+    pub fn transform_offset_to_byte_offset(&self, start_offset: usize, end_offset: usize) -> (usize, usize) {
+        let start_byte = self.text
+            .chars()
+            .take(start_offset)
+            .fold(0, |acc, cur| acc + cur.len_utf8());
+        let end_byte = (&self.text[start_offset..end_offset])
+            .chars()
+            .take(end_offset)
+            .fold(0, |acc, cur| acc + cur.len_utf8())
+            + start_byte;
+        (start_byte, end_byte)
+    }
     pub fn position_at(&mut self, mut offset: u32) -> Position {
         offset = offset.min(self.text.len() as u32).max(0);
 
@@ -93,7 +111,7 @@ impl FullTextDocument {
         }
         while low < high {
             let mid = low + (high - low) / 2;
-            if line_offsets[mid] as u32   > offset {
+            if line_offsets[mid] as u32 > offset {
                 high = mid;
             } else {
                 low = mid + 1;
