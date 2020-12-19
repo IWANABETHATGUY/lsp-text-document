@@ -37,7 +37,9 @@ impl FullTextDocument {
                 let start_offset = self.offset_at(range.start);
                 let end_offset = self.offset_at(range.end);
 
-                self.text = self.text[0..start_offset].to_string() + &change.text + &self.text[end_offset..];
+                // self.text = self.text[0..start_offset].to_string() + &change.text + &self.text[end_offset..];
+                self.text =
+                    self.text.chars().take(start_offset).chain(change.text.chars()).chain(self.text.chars().skip(end_offset)).collect::<String>();
                 let start_line = range.start.line as usize;
                 let end_line = range.end.line as usize;
                 let line_offsets = self.get_line_offsets();
