@@ -163,7 +163,7 @@ mod test_document_incremental_update {
     fn assert_valid_line_number(doc: &mut lsp_text_document::FullTextDocument) {
         let text = doc.text.to_string();
         let mut expected_line_number = 0;
-        for i in 0..text.len() {
+        for i in 0..text.chars().count() {
             assert_eq!(doc.position_at(i as u32).line, expected_line_number);
             let ch = text.chars().nth(i).unwrap();
             if ch == '\n' {
@@ -376,6 +376,14 @@ mod test_document_incremental_update {
         );
     }
 
+    #[test]
+    fn test_unicode() {
+        let mut document = new_document("我的你\r\n");
+        document.update(vec![event!("defg", range!(0, 3, 0, 3))], 1);
+        assert_eq!(document.version, 1);
+        assert_valid_line_number(&mut document);
+        assert_eq!(document.text, "我的你defg\r\n");
+    }
     #[test]
     fn test_basic_append() {
         let mut document = new_document("foooo\nbar\nbaz");
