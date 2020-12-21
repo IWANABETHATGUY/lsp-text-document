@@ -89,9 +89,10 @@ impl FullTextDocument {
             .chars()
             .take(start_offset)
             .fold(0, |acc, cur| acc + cur.len_utf8());
-        let end_byte = (&self.text[start_offset..end_offset])
+        let end_byte = self.text
             .chars()
-            .take(end_offset)
+            .skip(start_offset)
+            .take(end_offset - start_offset)
             .fold(0, |acc, cur| acc + cur.len_utf8())
             + start_byte;
         (start_byte, end_byte)

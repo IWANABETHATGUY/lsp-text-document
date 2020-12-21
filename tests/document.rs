@@ -384,6 +384,15 @@ mod test_document_incremental_update {
         assert_valid_line_number(&mut document);
         assert_eq!(document.text, "我的你defg\r\n");
     }
+
+    #[test]
+    fn test_unicode2() {
+        let mut document = new_document("我的你\r\n");
+        document.update(vec![event!("defg", range!(0, 2, 0, 2))], 1);
+        assert_eq!(document.version, 1);
+        assert_valid_line_number(&mut document);
+        assert_eq!(document.text, "我的defg你\r\n");
+    }
     #[test]
     fn test_basic_append() {
         let mut document = new_document("foooo\nbar\nbaz");

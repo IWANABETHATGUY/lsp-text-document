@@ -21,20 +21,22 @@ fn main() {
     // assert_valid_line_number(&mut document);
     let s = 10000;
     let e = 10100;
-    let string = read_to_string("test.js").unwrap();
+    let string = read_to_string("test.vue").unwrap();
     let start = Instant::now();
     let mut first_another = "".to_string();
-    
+
     for i in 0..100 {
         let text = string.clone();
         let start_byte = string
             .chars()
             .take(s)
             .fold(0, |acc, cur| acc + cur.len_utf8());
-        let end_byte = (&string[s..e])
+        let end_byte = string
             .chars()
-            .take(e)
-            .fold(0, |acc, cur| acc + cur.len_utf8()) + start_byte;
+            .skip(s)
+            .take(e - s)
+            .fold(0, |acc, cur| acc + cur.len_utf8())
+            + start_byte;
         first_another = text[0..start_byte].to_string() + "what" + &text[end_byte..];
         // println!("{:?}", _another);
     }
