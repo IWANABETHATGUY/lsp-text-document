@@ -37,10 +37,10 @@ impl FullTextDocument {
                 let start_offset = self.offset_at(range.start);
                 let end_offset = self.offset_at(range.end);
 
-                let (start_byte, end_byte) = self.transform_offset_to_byte_offset(start_offset, end_offset);
-                self.text = self.text[0..start_byte].to_string()
-                    + &change.text
-                    + &self.text[end_byte..];
+                let (start_byte, end_byte) =
+                    self.transform_offset_to_byte_offset(start_offset, end_offset);
+                self.text =
+                    self.text[0..start_byte].to_string() + &change.text + &self.text[end_byte..];
                 // self.text =
                 //     self.text.chars().take(start_offset).chain(change.text.chars()).chain(self.text.chars().skip(end_offset)).collect::<String>();
                 let start_line = range.start.line as usize;
@@ -84,12 +84,18 @@ impl FullTextDocument {
         }
     }
 
-    pub fn transform_offset_to_byte_offset(&self, start_offset: usize, end_offset: usize) -> (usize, usize) {
-        let start_byte = self.text
+    pub fn transform_offset_to_byte_offset(
+        &self,
+        start_offset: usize,
+        end_offset: usize,
+    ) -> (usize, usize) {
+        let start_byte = self
+            .text
             .chars()
             .take(start_offset)
             .fold(0, |acc, cur| acc + cur.len_utf8());
-        let end_byte = self.text
+        let end_byte = self
+            .text
             .chars()
             .skip(start_offset)
             .take(end_offset - start_offset)
@@ -157,13 +163,13 @@ impl FullTextDocument {
     pub fn offset_at(&mut self, position: Position) -> usize {
         let line_offsets = self.get_line_offsets();
         if position.line >= line_offsets.len() as u32 {
-            return self.text.len();
+            return self.text.chars().fold(0, |acc, cur| acc + cur.len_utf8());
         }
         let line_offset = line_offsets[position.line as usize];
         let next_line_offset = if position.line + 1 < line_offsets.len() as u32 {
             line_offsets[position.line as usize + 1]
         } else {
-            self.text.len()
+            self.text.chars().fold(0, |acc, cur| acc + cur.len_utf8())
         };
         (line_offset + position.character as usize)
             .min(next_line_offset)

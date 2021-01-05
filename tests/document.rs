@@ -378,11 +378,12 @@ mod test_document_incremental_update {
 
     #[test]
     fn test_unicode() {
-        let mut document = new_document("我的你\r\n");
+        let mut document = new_document("我的你\r\nhello");
         document.update(vec![event!("defg", range!(0, 3, 0, 3))], 1);
         assert_eq!(document.version, 1);
         assert_valid_line_number(&mut document);
-        assert_eq!(document.text, "我的你defg\r\n");
+        assert_eq!(document.text, "我的你defg\r\nhello");
+        assert_eq!(document.offset_at(position!(1, 0)), 9);
     }
 
     #[test]
