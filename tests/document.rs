@@ -189,7 +189,7 @@ mod test_document_incremental_update {
             1,
         );
         assert_eq!(document.version, 1);
-        assert_eq!(document.text, "function abc() {\n  console.log(\"\");\n}");
+        assert_eq!(document.get_text(), "function abc() {\n  console.log(\"\");\n}");
         assert_eq!(document.line_count(), 3);
         assert_valid_line_number(&mut document);
     }
@@ -208,7 +208,7 @@ mod test_document_incremental_update {
             1,
         );
         assert_eq!(document.version, 1);
-        assert_eq!(document.text, "function abc() {\n  \n}");
+        assert_eq!(document.get_text(), "function abc() {\n  \n}");
         assert_eq!(document.line_count(), 3);
         assert_valid_line_number(&mut document);
     }
@@ -227,7 +227,7 @@ mod test_document_incremental_update {
             1,
         );
         assert_eq!(document.version, 1);
-        assert_eq!(document.text, "function abc() {\n  \n  \n}");
+        assert_eq!(document.get_text(), "function abc() {\n  \n  \n}");
         assert_eq!(document.line_count(), 4);
         assert_valid_line_number(&mut document);
     }
@@ -240,7 +240,7 @@ mod test_document_incremental_update {
         document.update(vec![ie!(", world!", document.clone(), "hello")], 1);
         assert_eq!(document.version, 1);
         assert_eq!(
-            document.text,
+            document.get_text(),
             "function abc() {\n  console.log(\"hello, world!\");\n}"
         );
         assert_eq!(document.line_count(), 3);
@@ -256,7 +256,7 @@ mod test_document_incremental_update {
         document.update(vec![ie!("\n    bar();", document.clone(), "foo();")], 1);
         assert_eq!(document.version, 1);
         assert_eq!(
-            document.text,
+            document.get_text(),
             "function abc() {\r\n  while (true) {\n    foo();\n    bar();\n  };\n}"
         );
         assert_eq!(document.line_count(), 6);
@@ -274,7 +274,7 @@ mod test_document_incremental_update {
         );
         assert_eq!(document.version, 1);
         assert_eq!(
-            document.text,
+            document.get_text(),
             "function abc() {\n  console.log(\"world, hello!\");\n}"
         );
         assert_eq!(document.line_count(), 3);
@@ -296,7 +296,7 @@ mod test_document_incremental_update {
         );
         assert_eq!(document.version, 1);
         assert_eq!(
-            document.text,
+            document.get_text(),
             "\n//hello\nfunction d(){\n  console.log(\"hello, world!\");\n}"
         );
         assert_eq!(document.line_count(), 5);
@@ -312,7 +312,7 @@ mod test_document_incremental_update {
             1,
         );
         assert_eq!(document.version, 1);
-        assert_eq!(document.text, "a1\nb1\na2\nb2xx\nyy");
+        assert_eq!(document.get_text(), "a1\nb1\na2\nb2xx\nyy");
         assert_eq!(document.line_count(), 5);
         assert_valid_line_number(&mut document);
     }
@@ -325,7 +325,7 @@ mod test_document_incremental_update {
         assert_valid_line_number(&mut document);
         document.update(vec![re!("\nxx1\nxx2", document.clone(), "a2\nb2\na3")], 1);
         assert_eq!(document.version, 1);
-        assert_eq!(document.text, "a1\nb1\n\nxx1\nxx2\nb3\na4\nb4\n");
+        assert_eq!(document.get_text(), "a1\nb1\n\nxx1\nxx2\nb3\na4\nb4\n");
         assert_eq!(document.line_count(), 9);
         assert_valid_line_number(&mut document);
     }
@@ -338,7 +338,7 @@ mod test_document_incremental_update {
         assert_valid_line_number(&mut document);
         document.update(vec![re!("\ny\n", document.clone(), "a2\nb2\na3")], 1);
         assert_eq!(document.version, 1);
-        assert_eq!(document.text, "a1\nb1\n\ny\n\nb3\na4\nb4\n");
+        assert_eq!(document.get_text(), "a1\nb1\n\ny\n\nb3\na4\nb4\n");
         assert_eq!(document.line_count(), 9);
         assert_valid_line_number(&mut document);
     }
@@ -352,7 +352,7 @@ mod test_document_incremental_update {
         let text: String = String::from("dd") + &"\ndd".repeat(199);
         document.update(vec![re!(&text, document.clone(), "\ncc")], 1);
         assert_eq!(document.version, 1);
-        assert_eq!(document.text, "a1".to_string() + &text + "\nb1");
+        assert_eq!(document.get_text(), "a1".to_string() + &text + "\nb1");
         assert_eq!(document.line_count(), 201);
         assert_valid_line_number(&mut document);
     }
@@ -371,7 +371,7 @@ mod test_document_incremental_update {
         assert_eq!(document.version, 1);
         assert_valid_line_number(&mut document);
         assert_eq!(
-            document.text,
+            document.get_text(),
             "function abcdefghij() {\n  console.log(\"hello, test case!!!\");\n}"
         );
     }
@@ -382,7 +382,7 @@ mod test_document_incremental_update {
         document.update(vec![event!("defg", range!(0, 3, 0, 3))], 1);
         assert_eq!(document.version, 1);
         assert_valid_line_number(&mut document);
-        assert_eq!(document.text, "我的你defg\r\nhello");
+        assert_eq!(document.get_text(), "我的你defg\r\nhello");
         assert_eq!(document.offset_at(position!(1, 0)), 9);
     }
 
@@ -392,14 +392,14 @@ mod test_document_incremental_update {
         document.update(vec![event!("defg", range!(0, 2, 0, 2))], 1);
         assert_eq!(document.version, 1);
         assert_valid_line_number(&mut document);
-        assert_eq!(document.text, "我的defg你\r\n");
+        assert_eq!(document.get_text(), "我的defg你\r\n");
     }
     #[test]
     fn test_basic_append() {
         let mut document = new_document("foooo\nbar\nbaz");
         assert_eq!(document.offset_at(position!(2, 0)), 10);
         document.update(vec![event!(" some extra content", range!(1, 3, 1, 3))], 1);
-        assert_eq!(document.text, "foooo\nbar some extra content\nbaz");
+        assert_eq!(document.get_text(), "foooo\nbar some extra content\nbaz");
         assert_eq!(document.version, 1);
         assert_eq!(document.offset_at(position!(2, 0)), 29);
         assert_valid_line_number(&mut document);
@@ -410,7 +410,7 @@ mod test_document_incremental_update {
         let mut document = new_document("foooo\nbar\nbaz");
         assert_eq!(document.offset_at(position!(2, 0)), 10);
         document.update(vec![event!(" some extra\ncontent", range!(1, 3, 1, 3))], 1);
-        assert_eq!(document.text, "foooo\nbar some extra\ncontent\nbaz");
+        assert_eq!(document.get_text(), "foooo\nbar some extra\ncontent\nbaz");
         assert_eq!(document.version, 1);
         assert_eq!(document.offset_at(position!(3, 0)), 29);
         assert_eq!(document.line_count(), 4);
@@ -422,7 +422,7 @@ mod test_document_incremental_update {
         let mut document = new_document("foooo\nbar\nbaz");
         assert_eq!(document.offset_at(position!(2, 0)), 10);
         document.update(vec![event!("", range!(1, 0, 1, 3))], 1);
-        assert_eq!(document.text, "foooo\n\nbaz");
+        assert_eq!(document.get_text(), "foooo\n\nbaz");
         assert_eq!(document.version, 1);
         assert_eq!(document.offset_at(position!(2, 0)), 7);
         assert_eq!(document.line_count(), 3);
@@ -434,7 +434,7 @@ mod test_document_incremental_update {
         let mut document = new_document("foooo\nbar\nbaz");
         assert_eq!(document.offset_at(position!(2, 0)), 10);
         document.update(vec![event!("", range!(0, 5, 1, 3))], 1);
-        assert_eq!(document.text, "foooo\nbaz");
+        assert_eq!(document.get_text(), "foooo\nbaz");
         assert_eq!(document.version, 1);
         assert_eq!(document.offset_at(position!(1, 0)), 6);
         assert_eq!(document.line_count(), 2);
@@ -446,7 +446,7 @@ mod test_document_incremental_update {
         let mut document = new_document("foooo\nbar\nbaz");
         assert_eq!(document.offset_at(position!(2, 0)), 10);
         document.update(vec![event!("z", range!(1, 2, 1, 3))], 2);
-        assert_eq!(document.text, "foooo\nbaz\nbaz");
+        assert_eq!(document.get_text(), "foooo\nbaz\nbaz");
         assert_eq!(document.version, 2);
         assert_eq!(document.offset_at(position!(2, 0)), 10);
         assert_eq!(document.line_count(), 3);
@@ -458,7 +458,7 @@ mod test_document_incremental_update {
         let mut document = new_document("foo\nbar");
         assert_eq!(document.offset_at(position!(1, 0)), 4);
         document.update(vec![event!("foobar", range!(1, 0, 1, 3))], 1);
-        assert_eq!(document.text, "foo\nfoobar");
+        assert_eq!(document.get_text(), "foo\nfoobar");
         assert_eq!(document.version, 1);
         assert_eq!(document.offset_at(position!(1, 0)), 4);
         assert_eq!(document.line_count(), 2);
@@ -470,13 +470,13 @@ mod test_document_incremental_update {
         // The middle of document -> after the document ends
         let mut document = new_document("foo\r\nbar");
         document.update(vec![event!("foobar", range!(1, 0, 1, 10))], 2);
-        assert_eq!(document.text, "foo\r\nfoobar");
+        assert_eq!(document.get_text(), "foo\r\nfoobar");
         assert_eq!(document.version, 2);
         assert_eq!(document.offset_at(position!(1, 100)), 11);
         // After the document ends -> after the document ends
         let mut document = new_document("foo\nbar");
         document.update(vec![event!("abc123", range!(3, 0, 6, 10))], 2);
-        assert_eq!(document.text, "foo\nbarabc123");
+        assert_eq!(document.get_text(), "foo\nbarabc123");
         assert_eq!(document.version, 2);
         assert_eq!(document.offset_at(position!(1, 100)), 13);
     }

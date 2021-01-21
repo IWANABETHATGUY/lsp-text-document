@@ -1,4 +1,5 @@
 use lsp_types::{Position, Range, TextDocumentContentChangeEvent, Url};
+use ropey::Rope;
 #[derive(Clone)]
 pub struct FullTextDocument {
     pub uri: Url,
@@ -14,6 +15,7 @@ pub struct FullTextDocument {
     pub text: String,
 
     line_offset: Option<Vec<usize>>,
+    pub rope: Rope,
 }
 
 impl FullTextDocument {
@@ -23,8 +25,9 @@ impl FullTextDocument {
             uri,
             language_id,
             version,
-            text,
+            text: text.clone(),
             line_offset: None,
+            rope: Rope::from_str(&text),
         }
     }
 
@@ -37,45 +40,45 @@ impl FullTextDocument {
                 let start_offset = self.offset_at(range.start);
                 let end_offset = self.offset_at(range.end);
 
-                let (start_byte, end_byte) =
-                    self.transform_offset_to_byte_offset(start_offset, end_offset);
-                self.text =
-                    self.text[0..start_byte].to_string() + &change.text + &self.text[end_byte..];
+                // let (start_byte, end_byte) =
+                //     self.transform_offset_to_byte_offset(start_offset, end_offset);
+                self.rope.remove(start_offset..end_offset);
+                self.rope.insert(start_offset, &change.text);
                 // self.text =
                 //     self.text.chars().take(start_offset).chain(change.text.chars()).chain(self.text.chars().skip(end_offset)).collect::<String>();
-                let start_line = range.start.line as usize;
-                let end_line = range.end.line as usize;
-                let line_offsets = self.get_line_offsets();
+                // let start_line = range.start.line as usize;
+                // let end_line = range.end.line as usize;
+                // let line_offsets = self.get_line_offsets();
 
-                let mut add_line_offsets =
-                    compute_line_offsets(&change.text, false, Some(start_offset));
+                // let mut add_line_offsets =
+                //     compute_line_offsets(&change.text, false, Some(start_offset));
 
-                let add_line_offsets_len = add_line_offsets.len();
-                // if line_offsets.len() <= end_line as usize {
-                //     line_offsets.extend(vec![0; end_line as usize + 1 - line_offsets.len()]);
+                // let add_line_offsets_len = add_line_offsets.len();
+                // // if line_offsets.len() <= end_line as usize {
+                // //     line_offsets.extend(vec![0; end_line as usize + 1 - line_offsets.len()]);
+                // // }
+
+                // if end_line - start_line == add_line_offsets.len() {
+                //     for (i, offset) in add_line_offsets.into_iter().enumerate() {
+                //         line_offsets[i + start_line + 1] = offset;
+                //     }
+                // } else {
+                //     *line_offsets = {
+                //         let mut res =
+                //             line_offsets[0..=start_line.min(line_offsets.len() - 1)].to_vec();
+                //         res.append(&mut add_line_offsets);
+                //         res.extend_from_slice(
+                //             &line_offsets[end_line.min(line_offsets.len() - 1) + 1..],
+                //         );
+                //         res
+                //     };
                 // }
-
-                if end_line - start_line == add_line_offsets.len() {
-                    for (i, offset) in add_line_offsets.into_iter().enumerate() {
-                        line_offsets[i + start_line + 1] = offset;
-                    }
-                } else {
-                    *line_offsets = {
-                        let mut res =
-                            line_offsets[0..=start_line.min(line_offsets.len() - 1)].to_vec();
-                        res.append(&mut add_line_offsets);
-                        res.extend_from_slice(
-                            &line_offsets[end_line.min(line_offsets.len() - 1) + 1..],
-                        );
-                        res
-                    };
-                }
-                let diff: i32 = change.text.len() as i32 - (end_offset - start_offset) as i32;
-                if diff != 0 {
-                    for i in start_line + 1 + add_line_offsets_len..line_offsets.len() {
-                        line_offsets[i] = (line_offsets[i] as i32 + diff) as usize;
-                    }
-                }
+                // let diff: i32 = change.text.len() as i32 - (end_offset - start_offset) as i32;
+                // if diff != 0 {
+                //     for i in start_line + 1 + add_line_offsets_len..line_offsets.len() {
+                //         line_offsets[i] = (line_offsets[i] as i32 + diff) as usize;
+                //     }
+                // }
             } else if Self::is_full(&change) {
                 self.text = change.text;
                 self.line_offset = None;
@@ -129,22 +132,10 @@ impl FullTextDocument {
             line,
             character: offset - line_offsets[line as usize] as u32,
         };
-        // while (low < high) {
-        // 	let mid = Math.floor((low + high) / 2);
-        // 	if (lineOffsets[mid] > offset) {
-        // 		high = mid;
-        // 	} else {
-        // 		low = mid + 1;
-        // 	}
-        // }
-        // // low is the least x for which the line offset is larger than the current offset
-        // // or array.length if no line offset is larger than the current offset
-        // let line = low - 1;
-        // return { line, character: offset - lineOffsets[line] };
     }
 
     pub fn line_count(&mut self) -> usize {
-        self.get_line_offsets().len()
+        self.rope.len_lines()
     }
     pub fn is_incremental(event: &TextDocumentContentChangeEvent) -> bool {
         event.range.is_some()
@@ -160,24 +151,28 @@ impl FullTextDocument {
         }
         self.line_offset.as_mut().unwrap()
     }
+
+    pub fn get_text(&self) -> &str {
+        let end_char = self.rope.len_chars();
+        self.rope.slice(0..end_char).as_str().unwrap()
+    }
     pub fn offset_at(&mut self, position: Position) -> usize {
-        let line_offsets = self.get_line_offsets();
-        if position.line >= line_offsets.len() as u32 {
-            return self.text.chars().fold(0, |acc, cur| acc + cur.len_utf8());
+        let Position { line, character } = position;
+        // line_to_char + character as usize
+        // let line_offsets = self.get_line_offsets();
+        if position.line >= self.line_count() as u32 {
+            return self.rope.len_chars();
+            // return self.text.chars().fold(0, |acc, cur| acc + cur.len_utf8());
         }
-        let line_offset = line_offsets[position.line as usize];
-        let next_line_offset = if position.line + 1 < line_offsets.len() as u32 {
-            line_offsets[position.line as usize + 1]
+        let line_offset = self.rope.line_to_char(line as usize);
+        let next_line_offset = if position.line + 1 < self.line_count() as u32 {
+            self.rope.line_to_char(line as usize + 1)
         } else {
-            self.text.chars().fold(0, |acc, cur| acc + cur.len_utf8())
+            self.rope.len_chars()
         };
         (line_offset + position.character as usize)
             .min(next_line_offset)
             .max(line_offset)
-        // return Math.max(
-        //     Math.min(line_offset + position.character, next_line_offset),
-        //     line_offset,
-        // );
     }
 }
 
