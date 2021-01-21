@@ -154,7 +154,7 @@ impl FullTextDocument {
 
     pub fn get_text(&self) -> &str {
         let end_char = self.rope.len_chars();
-        self.rope.slice(0..end_char).as_str().unwrap()
+        self.rope.slice(0..end_char).as_str().unwrap_or("")
     }
     pub fn offset_at(&mut self, position: Position) -> usize {
         let Position { line, character } = position;
@@ -170,7 +170,7 @@ impl FullTextDocument {
         } else {
             self.rope.len_chars()
         };
-        (line_offset + position.character as usize)
+        (line_offset + character as usize)
             .min(next_line_offset)
             .max(line_offset)
     }
