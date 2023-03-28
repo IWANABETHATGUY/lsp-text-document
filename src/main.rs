@@ -1,7 +1,7 @@
 use std::{fs::read_to_string, time::Instant};
 
-use lsp_text_document::{compute_line_offsets, event, position, range, range_at, FullTextDocument};
-use lsp_types::{Position, Url};
+use lsp_text_document::FullTextDocument;
+use lsp_types::Url;
 
 pub fn new_document(str: &str) -> FullTextDocument {
     let url = Url::parse("file://foo");
@@ -25,7 +25,7 @@ fn main() {
     let start = Instant::now();
     let mut first_another = "".to_string();
 
-    for i in 0..100 {
+    for _ in 0..100 {
         let text = string.clone();
         let start_byte = string
             .chars()
@@ -43,7 +43,7 @@ fn main() {
     println!("{:?}", start.elapsed());
 
     let start = Instant::now();
-    for i in 0..100 {
+    for _ in 0..100 {
         let text = string.clone();
         let _another = text
             .chars()
